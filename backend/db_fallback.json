@@ -1,0 +1,306 @@
+{
+  "users": [
+    {
+      "id": "79f69a47-b224-4129-91a3-8d53fe26184e",
+      "username": "hapid",
+      "passwordHash": "7c34343851ecd3ee9fb82e2c0c24e7c0cc27e2d03f71f712a76f47a5316bc4dc",
+      "createdAt": "2026-06-29T02:52:00.788Z",
+      "updatedAt": "2026-06-29T02:52:00.788Z"
+    },
+    {
+      "id": "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12",
+      "username": "admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "createdAt": "2026-06-29T03:03:54.157Z",
+      "updatedAt": "2026-06-29T03:03:54.158Z"
+    }
+  ],
+  "kancilStatus": {
+    "79f69a47-b224-4129-91a3-8d53fe26184e": {
+      "userId": "79f69a47-b224-4129-91a3-8d53fe26184e",
+      "level": 1,
+      "xp": 40,
+      "hunger": 100,
+      "happiness": 0,
+      "energy": 8,
+      "health": 0,
+      "coins": 50,
+      "isSleeping": 0
+    },
+    "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12": {
+      "userId": "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12",
+      "level": 1,
+      "xp": 0,
+      "hunger": 100,
+      "happiness": 0,
+      "energy": 0,
+      "health": 0,
+      "coins": 90,
+      "isSleeping": 0
+    }
+  },
+  "inventories": [
+    {
+      "id": 1,
+      "userId": "79f69a47-b224-4129-91a3-8d53fe26184e",
+      "itemId": "apple",
+      "quantity": 2
+    },
+    {
+      "id": 2,
+      "userId": "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12",
+      "itemId": "banana",
+      "quantity": 1
+    }
+  ],
+  "quizQuestions": [
+    {
+      "id": 1,
+      "subject": "matematika",
+      "levelMin": 1,
+      "questionText": "Berapakah hasil dari 15 + 8?",
+      "options": [
+        "20",
+        "23",
+        "25",
+        "21"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 2,
+      "subject": "matematika",
+      "levelMin": 1,
+      "questionText": "Kancil mempunyai 12 apel. Kancil memberikan 4 apel ke Kerbau. Berapa sisa apel Kancil?",
+      "options": [
+        "6",
+        "8",
+        "10",
+        "7"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 3,
+      "subject": "matematika",
+      "levelMin": 2,
+      "questionText": "Hasil perkalian dari 5 x 6 adalah...",
+      "options": [
+        "30",
+        "25",
+        "35",
+        "24"
+      ],
+      "correctOptionIndex": 0,
+      "rewardCoins": 15,
+      "rewardXp": 25
+    },
+    {
+      "id": 4,
+      "subject": "matematika",
+      "levelMin": 3,
+      "questionText": "Berapa 100 dibagi 4?",
+      "options": [
+        "20",
+        "30",
+        "25",
+        "15"
+      ],
+      "correctOptionIndex": 2,
+      "rewardCoins": 20,
+      "rewardXp": 30
+    },
+    {
+      "id": 5,
+      "subject": "ipa",
+      "levelMin": 1,
+      "questionText": "Hewan apakah yang bernapas menggunakan insang?",
+      "options": [
+        "Kucing",
+        "Burung",
+        "Ikan",
+        "Kancil"
+      ],
+      "correctOptionIndex": 2,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 6,
+      "subject": "ipa",
+      "levelMin": 1,
+      "questionText": "Bagian tumbuhan yang bertugas menyerap air dari dalam tanah adalah...",
+      "options": [
+        "Daun",
+        "Akar",
+        "Batang",
+        "Bunga"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 7,
+      "subject": "ipa",
+      "levelMin": 2,
+      "questionText": "Manakah dari benda berikut yang termasuk benda padat?",
+      "options": [
+        "Air sirup",
+        "Batu kali",
+        "Asap pembakaran",
+        "Minyak goreng"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 12,
+      "rewardXp": 22
+    },
+    {
+      "id": 8,
+      "subject": "ips",
+      "levelMin": 1,
+      "questionText": "Apakah nama ibukota dari negara Indonesia?",
+      "options": [
+        "Bandung",
+        "Surabaya",
+        "Jakarta",
+        "Medan"
+      ],
+      "correctOptionIndex": 2,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 9,
+      "subject": "ips",
+      "levelMin": 2,
+      "questionText": "Pekerjaan yang menghasilkan barang berupa makanan pokok padi adalah...",
+      "options": [
+        "Nelayan",
+        "Petani",
+        "Guru",
+        "Dokter"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 12,
+      "rewardXp": 22
+    },
+    {
+      "id": 10,
+      "subject": "indonesia",
+      "levelMin": 1,
+      "questionText": "Kata tanya yang digunakan untuk menanyakan tempat adalah...",
+      "options": [
+        "Siapa",
+        "Mengapa",
+        "Di mana",
+        "Kapan"
+      ],
+      "correctOptionIndex": 2,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 11,
+      "subject": "indonesia",
+      "levelMin": 1,
+      "questionText": "Lawan kata dari \"Rajin\" adalah...",
+      "options": [
+        "Pintar",
+        "Malas",
+        "Baik",
+        "Sombong"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 12,
+      "subject": "english",
+      "levelMin": 1,
+      "questionText": "Bahasa Inggris dari buah \"Apel\" adalah...",
+      "options": [
+        "Banana",
+        "Grape",
+        "Apple",
+        "Orange"
+      ],
+      "correctOptionIndex": 2,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 13,
+      "subject": "english",
+      "levelMin": 1,
+      "questionText": "What is the color of the sun?",
+      "options": [
+        "Yellow",
+        "Green",
+        "Blue",
+        "Purple"
+      ],
+      "correctOptionIndex": 0,
+      "rewardCoins": 12,
+      "rewardXp": 22
+    },
+    {
+      "id": 14,
+      "subject": "pancasila",
+      "levelMin": 1,
+      "questionText": "Lambang sila pertama Pancasila adalah...",
+      "options": [
+        "Bintang",
+        "Rantai",
+        "Pohon Beringin",
+        "Kepala Banteng"
+      ],
+      "correctOptionIndex": 0,
+      "rewardCoins": 10,
+      "rewardXp": 20
+    },
+    {
+      "id": 15,
+      "subject": "pancasila",
+      "levelMin": 2,
+      "questionText": "Semboyan bangsa Indonesia adalah Bhinneka Tunggal Ika yang berarti...",
+      "options": [
+        "Sama saja walau berbeda",
+        "Berbeda-beda tetapi tetap satu jua",
+        "Persatuan Indonesia",
+        "Keadilan bagi sesama"
+      ],
+      "correctOptionIndex": 1,
+      "rewardCoins": 15,
+      "rewardXp": 25
+    }
+  ],
+  "userProgress": {
+    "79f69a47-b224-4129-91a3-8d53fe26184e": {
+      "userId": "79f69a47-b224-4129-91a3-8d53fe26184e",
+      "currentWorldId": 1,
+      "unlockedWorlds": [
+        1
+      ],
+      "completedStories": [
+        "intro"
+      ]
+    },
+    "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12": {
+      "userId": "d7e59b8b-4c11-4b7e-9aeb-fbc751083d12",
+      "currentWorldId": 1,
+      "unlockedWorlds": [
+        1
+      ],
+      "completedStories": [
+        "intro"
+      ]
+    }
+  }
+}
