@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'numi.apps',
-  appName: 'NUMI',
+  appId: 'com.numi.apps',
+  appName: 'Numi',
   webDir: 'dist'
 };
 

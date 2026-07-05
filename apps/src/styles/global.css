@@ -11,8 +11,10 @@
   --color-brand-pink-dark: #C2185B;
   --color-brand-blue: #9AD7FF;
   --color-brand-blue-dark: #0288D1;
-  --color-brand-cream: #FFFDF7;
+  --color-brand-cream: #FFF8EE;
   --color-brand-dark: #1E293B;
+  --color-brand-warm: #6B5B4E;
+  --color-brand-card: #FFFDF7;
   --font-kids: 'Fredoka', 'Outfit', 'Quicksand', sans-serif;
 }
 
@@ -26,11 +28,64 @@
   }
 }
 
-/* Custom Neobrutalism Component Utility Classes */
+/* ─── Kawaii Soft Card ─── */
+.card-kawaii {
+  background-color: var(--color-brand-card);
+  border: 2px solid rgba(107, 91, 78, 0.15);
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 8px rgba(107, 91, 78, 0.08);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-kawaii:hover {
+  box-shadow: 0 4px 12px rgba(107, 91, 78, 0.12);
+}
+
+/* ─── Kawaii Pill Button ─── */
+.pill-kawaii {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background-color: var(--color-brand-card);
+  border: 2px solid rgba(107, 91, 78, 0.15);
+  padding: 0.375rem 0.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(107, 91, 78, 0.08);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--color-brand-dark);
+  transition: all 0.15s ease;
+}
+
+.pill-kawaii:active {
+  transform: scale(0.96);
+}
+
+/* ─── Kawaii Soft Button ─── */
+.btn-kawaii {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid rgba(107, 91, 78, 0.15);
+  padding: 0.625rem 1.25rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(107, 91, 78, 0.1);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-kawaii:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(107, 91, 78, 0.08);
+}
+
+/* ─── Neobrutalism (kept for backward compat) ─── */
 .card-neobrutalism {
   background-color: white;
   border: 4px solid var(--color-brand-dark);
-  border-radius: 1.5rem; /* rounded-3xl */
+  border-radius: 1.5rem;
   box-shadow: 6px 6px 0px 0px var(--color-brand-dark);
   transition: all 0.15s ease-in-out;
 }
@@ -47,7 +102,7 @@
   font-weight: 800;
   border: 4px solid var(--color-brand-dark);
   padding: 0.75rem 1.5rem;
-  border-radius: 1rem; /* rounded-2xl */
+  border-radius: 1rem;
   box-shadow: 4px 4px 0px 0px var(--color-brand-dark);
   transition: all 0.1s ease-in-out;
   cursor: pointer;
@@ -89,6 +144,53 @@
   -webkit-text-stroke: 1.5px var(--color-brand-dark);
 }
 
+/* ─── Bottom Nav Bar ─── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--color-brand-card);
+  border-top: 2px solid rgba(107, 91, 78, 0.1);
+  box-shadow: 0 -2px 12px rgba(107, 91, 78, 0.08);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.375rem 0;
+  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0px));
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  min-width: 3.5rem;
+}
+
+.bottom-nav-item.active {
+  background: #FFF3D6;
+  color: #E67E22;
+}
+
+.bottom-nav-item .nav-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.bottom-nav-item .nav-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -99,16 +201,35 @@
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s ease-out forwards;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--color-brand-cream);
-  border-left: 4px solid var(--color-brand-dark);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-brand-yellow);
-  border: 4px solid var(--color-brand-dark);
+  background: rgba(107, 91, 78, 0.2);
   border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 91, 78, 0.35);
 }

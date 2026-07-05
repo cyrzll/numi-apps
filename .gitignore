@@ -56,3 +56,4 @@ dist/
 **/android/app/src/main/assets/public/
 
 webapps
+apps/example
