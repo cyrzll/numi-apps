@@ -739,6 +739,12 @@ export const PlayroomDashboard: React.FC = () => {
                   style={{ backgroundImage: `url('/rooms/room_makan.png')` }}
                 />
               )}
+              {idx === 1 && (
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/rooms/room_mandi.png')` }}
+                />
+              )}
               {idx === 2 && (
                 <div 
                   className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -751,11 +757,11 @@ export const PlayroomDashboard: React.FC = () => {
                   style={{ backgroundImage: `url('/rooms/room_night.png')` }}
                 />
               )}
-              {(idx === 1 || idx === 4) && (
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                  {idx === 1 && <RoomMandi />}
-                  {idx === 4 && <RoomBelajar worldDecor={getWorldDecor()} />}
-                </svg>
+              {idx === 4 && (
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/rooms/room_belajar.png')` }}
+                />
               )}
 
               {/* SLIDING BOTTOM ACTIONS PANEL FOR EACH ROOM */}
