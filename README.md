@@ -1,32 +1,28 @@
 # 🌟 NUMI (Math Adventure Game)
 
-NUMI (formerly *Kancil Belajar*) is a premium, kawaii-themed, offline-capable children's math learning game app. Built with **Ionic React**, **Capacitor**, and **Node.js**, it features engaging RPG/pet-care style elements (rooms, shop, inventory, maps) alongside arithmetic quizzes to make math learning interactive and fun.
+NUMI (formerly *Kancil Belajar*) is a premium, kawaii-themed, offline-capable children's math learning game app. Built primarily using **Ionic React** (compiled via **Capacitor** to a native Android package), it features engaging RPG/pet-care style elements (rooms, shop, inventory, maps) alongside arithmetic quizzes to make math learning interactive and fun.
 
 ---
 
 ## 📂 Project Structure
 
-This monorepo contains the following components:
+This repository represents the main client application of NUMI:
 
-- **[apps/](file:///Users/rizal/projek/astro-js/hackaton/apps)**: The frontend game client built with React, Vite, Ionic Framework, and TailwindCSS. It integrates Capacitor to compile into a native Android application.
-- **[backend/](file:///Users/rizal/projek/astro-js/hackaton/backend)**: The Node.js / TypeScript API backend service utilizing Drizzle ORM and WebSockets for real-time capabilities.
+- **[apps/](file:///Users/[user]/projek/astro-js/hackaton/apps)**: The frontend game client built with React, Vite, Ionic Framework, and TailwindCSS. It integrates Capacitor to compile into a native Android application.
+
+*(Note: The optional multi-user/database synchronization backend service code resides on the `feature/kampung-numi` branch, leaving the `main` branch optimized for the local offline-first Android application gameplay).*
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend (`apps`)
+### Frontend & Mobile Wrapper (`apps`)
 - **Framework**: Ionic React + React 19 + TypeScript
 - **Styling**: TailwindCSS
 - **Build Tool**: Vite
-- **Mobile Wrapper**: Capacitor (Android target)
+- **Mobile Wrapper**: Capacitor (Android target compilation)
 - **State/Database**: Offline-first simulated SQLite interceptor fallback in localStorage
 - **Animations**: GSAP (GreenSock Animation Platform)
-
-### Backend (`backend`)
-- **Runtime**: Node.js + TypeScript
-- **Database ORM**: Drizzle ORM
-- **Realtime**: WebSockets
 
 ---
 
@@ -34,9 +30,9 @@ This monorepo contains the following components:
 
 ### Prerequisites
 Make sure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Node.js](https://nodejs.org/) (v22 or higher recommended)
 - [Android Studio](https://developer.android.com/studio) (for running and compiling the Android app)
-- Gradle & Java Development Kit (JDK 17)
+- Gradle & Java Development Kit (JDK 21)
 
 ---
 
@@ -69,25 +65,6 @@ npx cap sync android
 After syncing, you can open the Android project in Android Studio:
 ```bash
 npx cap open android
-```
-
----
-
-### 2. Backend Development (`backend`)
-
-Navigate to the `backend` folder:
-```bash
-cd backend
-```
-
-#### Install Dependencies
-```bash
-npm install
-```
-
-#### Run Dev Server
-```bash
-npm run dev
 ```
 
 ---
