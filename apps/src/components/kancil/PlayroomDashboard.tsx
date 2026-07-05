@@ -1,21 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { KancilStatus } from './KancilStatus.js';
 import { KancilPet } from './KancilPet.js';
 import type { KancilAnimState } from './KancilPet.js';
+import { RoomMakan, RoomMandi, RoomBermain, RoomTidur, RoomBelajar } from './KawaiiRooms.js';
 import { ShopModal } from '../shop/ShopModal.js';
 import { InventoryModal } from '../inventory/InventoryModal.js';
-import { BottomNavBar, type TabId } from '../ui/BottomNavBar.js';
-import { BelajarTab } from '../tabs/BelajarTab.js';
-import { TokoTab } from '../tabs/TokoTab.js';
-import { TemanTab } from '../tabs/TemanTab.js';
-import { ProfilTab } from '../tabs/ProfilTab.js';
-import { playSynthSound } from '../ui/Button.js';
+import { Button, playSynthSound } from '../ui/Button.js';
 import { db } from '../../services/sqliteService.js';
 import { 
-  Coins, Star, Flame, Bell, Gift, Crown,
-  Utensils, Gamepad2, Bath, Brush,
-  Apple, Banana, Carrot, Milk, CupSoda,
-  BookOpen, Moon, Map
+  Map, 
+  LogOut, 
+  Camera, 
+  Settings, 
+  BookOpen, 
+  Gift, 
+  ShoppingBag, 
+  Coins, 
+  Star, 
+  Zap, 
+  Utensils, 
+  Heart, 
+  Smile, 
+  Bath, 
+  Gamepad2, 
+  Moon, 
+  Droplet, 
+  Crown,
+  Brush,
+  Apple,
+  Milk,
+  Banana,
+  Carrot,
+  CupSoda
 } from 'lucide-react';
 import { gsap } from 'gsap';
 
@@ -40,9 +57,6 @@ export const PlayroomDashboard: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; username: string; role?: string } | null>(null);
   
-  // Tab navigation
-  const [activeTab, setActiveTab] = useState<TabId>('beranda');
-
   // States
   const [kancilStatus, setKancilStatus] = useState<KancilState>({
     level: 1, xp: 0, hunger: 30, happiness: 80, energy: 80, health: 100, coins: 100, isSleeping: 0
@@ -52,9 +66,14 @@ export const PlayroomDashboard: React.FC = () => {
   });
   const [inventory, setInventory] = useState([]);
   
+  // Room navigation and touch gestures
+  const [activeRoomIndex, setActiveRoomIndex] = useState(2); // 2: Ruang Bermain
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  
   // Animation and visual states
   const [animState, setAnimState] = useState<KancilAnimState>('idle');
-  const [bubbleMessage, setBubbleMessage] = useState('Ayo belajar matematika seru bareng Numi! ❤️');
+  const [bubbleMessage, setBubbleMessage] = useState('Halo teman! Hari ini kita mau belajar apa? 📚');
   
   // Drag-and-drop feeding states
   const [activeDraggableFood, setActiveDraggableFood] = useState<{ id: string; name: string } | null>(null);
@@ -62,30 +81,9 @@ export const PlayroomDashboard: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isNearMouth, setIsNearMouth] = useState(false);
 
-  // Cosmetics states
+  // Cosmetics states (skin color and clothing)
   const [skinColor, setSkinColor] = useState<string>('color_default');
   const [activeClothing, setActiveClothing] = useState<string | null>(null);
-
-  // Animation overlay
-  const [activeAnimation, setActiveAnimation] = useState<'drink' | 'bath' | 'play' | 'clean' | null>(null);
-  const animEmojiRef = useRef<HTMLDivElement>(null);
-
-  // Modals (kept for backward compat)
-  const [shopOpen, setShopOpen] = useState(false);
-  const [inventoryOpen, setInventoryOpen] = useState(false);
-
-  const roomRef = useRef<HTMLDivElement>(null);
-  const dragOffsetRef = useRef({ x: 0, y: 0 });
-
-  // Determine room background based on time of day
-  const getTimeOfDay = () => {
-    const hour = new Date().getHours();
-    if (hour >= 21 || hour < 6) return 'night';
-    return 'day';
-  };
-
-  const [timeOfDay] = useState(getTimeOfDay());
-  const roomBg = timeOfDay === 'night' ? '/rooms/room_night.png' : '/rooms/room_day.png';
 
   useEffect(() => {
     const updateCosmetics = () => {
@@ -99,6 +97,9 @@ export const PlayroomDashboard: React.FC = () => {
     };
   }, []);
 
+  const roomRef = useRef<HTMLDivElement>(null);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+
   const renderFoodIcon = (id: string) => {
     const css = "w-8 h-8 text-[#6B5B4E]";
     if (id === 'apple') return <Apple className={`${css} text-rose-500 fill-rose-100`} />;
@@ -109,14 +110,39 @@ export const PlayroomDashboard: React.FC = () => {
     return <Apple className={`${css} text-rose-500 fill-rose-100`} />;
   };
 
-  // ─── Drag-and-drop ───
+  const handleTouchStartGesture = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEndGesture = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = e.changedTouches[0].clientY - touchStartY.current;
+
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+      playSynthSound('click');
+      if (diffX > 0) {
+        // Swipe kanan (prev room)
+        setActiveRoomIndex((prev) => (prev > 0 ? prev - 1 : 4));
+      } else {
+        // Swipe kiri (next room)
+        setActiveRoomIndex((prev) => (prev < 4 ? prev + 1 : 0));
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   const handleDragStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!roomRef.current || kancilStatus.isSleeping === 1) return;
     setIsDragging(true);
     playSynthSound('hover');
+
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const foodEl = e.currentTarget.getBoundingClientRect();
+    
     dragOffsetRef.current = {
       x: clientX - (foodEl.left + foodEl.width / 2),
       y: clientY - (foodEl.top + foodEl.height / 2)
@@ -125,24 +151,31 @@ export const PlayroomDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!isDragging || !activeDraggableFood) return;
+
     const handleDragMove = (e: MouseEvent | TouchEvent) => {
       if (!roomRef.current) return;
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
       const roomRect = roomRef.current.getBoundingClientRect();
+
       const relativeX = clientX - roomRect.left - dragOffsetRef.current.x;
       const relativeY = clientY - roomRect.top - dragOffsetRef.current.y;
+
       const clampedX = Math.max(30, Math.min(roomRect.width - 30, relativeX));
       const clampedY = Math.max(30, Math.min(roomRect.height - 30, relativeY));
+
       setFoodPos({ x: clampedX, y: clampedY });
+
       const mouthTarget = document.getElementById('kancil-mouth-target');
       if (mouthTarget) {
         const mouthRect = mouthTarget.getBoundingClientRect();
         const mouthCenterX = mouthRect.left - roomRect.left + mouthRect.width / 2;
         const mouthCenterY = mouthRect.top - roomRect.top + mouthRect.height / 2;
+
         const dx = clampedX - mouthCenterX;
         const dy = clampedY - mouthCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
+
         if (distance < 65) {
           if (!isNearMouth) {
             setIsNearMouth(true);
@@ -158,35 +191,62 @@ export const PlayroomDashboard: React.FC = () => {
         }
       }
     };
+
     const handleDragEnd = async () => {
       setIsDragging(false);
       if (!roomRef.current) return;
+      const roomRect = roomRef.current.getBoundingClientRect();
+
       if (isNearMouth && activeDraggableFood) {
         setIsNearMouth(false);
         const foodId = activeDraggableFood.id;
         setActiveDraggableFood(null);
+
         try {
           const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ action: 'feed', itemId: foodId })
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
+
           handleUseInventoryItem('feed', foodId, data.kancil, data.inventory, data.message);
         } catch (err: any) {
           alert(err.message || 'Gagal memberi makan.');
           setAnimState(kancilStatus.isSleeping === 1 ? 'sleep' : 'idle');
         }
       } else {
+        gsap.to('.draggable-food-item', {
+          x: 0,
+          y: 0,
+          left: roomRect.width - 80,
+          top: roomRect.height - 100,
+          duration: 0.5,
+          ease: 'elastic.out(1, 0.5)',
+          onUpdate: function () {
+            const target = this.targets()[0] as HTMLElement;
+            if (target) {
+              setFoodPos({
+                x: parseFloat(target.style.left),
+                y: parseFloat(target.style.top)
+              });
+            }
+          }
+        });
         setAnimState(kancilStatus.isSleeping === 1 ? 'sleep' : 'idle');
         setBubbleMessage('Ayo, dekatkan makanannya tepat ke mulutku ya! 🍎');
       }
     };
+
     window.addEventListener('mousemove', handleDragMove);
     window.addEventListener('mouseup', handleDragEnd);
     window.addEventListener('touchmove', handleDragMove);
     window.addEventListener('touchend', handleDragEnd);
+
     return () => {
       window.removeEventListener('mousemove', handleDragMove);
       window.removeEventListener('mouseup', handleDragEnd);
@@ -195,24 +255,38 @@ export const PlayroomDashboard: React.FC = () => {
     };
   }, [isDragging, isNearMouth, activeDraggableFood, token, kancilStatus.isSleeping]);
 
-  // ─── Session & Data Fetch ───
+  // Modals state
+  const [shopOpen, setShopOpen] = useState(false);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [activeAnimation, setActiveAnimation] = useState<'drink' | 'bath' | 'play' | 'clean' | null>(null);
+  const animEmojiRef = useRef<HTMLDivElement>(null);
+
+  const socketRef = useRef<WebSocket | null>(null);
+
+  // 1. Fetch user session and token
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
+
     if (!savedToken || !savedUser) {
       window.location.href = '/';
       return;
     }
+
     setToken(savedToken);
     setUser(JSON.parse(savedUser));
 
+    // Fetch initial inventory
     fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/inventory`, {
       headers: { Authorization: `Bearer ${savedToken}` }
     })
       .then(res => res.json())
-      .then(data => { if (data.inventory) setInventory(data.inventory); })
+      .then(data => {
+        if (data.inventory) setInventory(data.inventory);
+      })
       .catch(err => console.error('Error fetching inventory:', err));
 
+    // Fetch initial Kancil status
     fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/status`, {
       headers: { Authorization: `Bearer ${savedToken}` }
     })
@@ -226,68 +300,107 @@ export const PlayroomDashboard: React.FC = () => {
       .catch(err => console.error('Error fetching Kancil status:', err));
   }, []);
 
-  // ─── Local DB Tick ───
+  // 2. Simulate Local Database Tick Cycle (Offline Mode)
   useEffect(() => {
     if (!token) return;
+
     const interval = setInterval(() => {
       setKancilStatus((prev) => {
         const isSleeping = prev.isSleeping === 1;
+        
         const newHunger = Math.min(100, prev.hunger + (isSleeping ? 0.5 : 1.5));
         const newHappiness = Math.max(0, prev.happiness - (isSleeping ? 0.2 : 1.2));
-        const newEnergy = isSleeping ? Math.min(100, prev.energy + 5) : Math.max(0, prev.energy - 1);
-        const newHealth = prev.hunger >= 90 || prev.energy <= 10 ? Math.max(0, prev.health - 2) : prev.health;
-        const updated = { ...prev, hunger: Math.round(newHunger), happiness: Math.round(newHappiness), energy: Math.round(newEnergy), health: Math.round(newHealth) };
-        try { db.updateKancil(token, updated); } catch (e) { console.error(e); }
+        const newEnergy = isSleeping 
+          ? Math.min(100, prev.energy + 5) 
+          : Math.max(0, prev.energy - 1);
+        const newHealth = prev.hunger >= 90 || prev.energy <= 10 
+          ? Math.max(0, prev.health - 2) 
+          : prev.health;
+
+        const updated = {
+          ...prev,
+          hunger: Math.round(newHunger),
+          happiness: Math.round(newHappiness),
+          energy: Math.round(newEnergy),
+          health: Math.round(newHealth),
+        };
+
+        // Persist to local sqlite db
+        try {
+          db.updateKancil(token, updated);
+        } catch (e) {
+          console.error(e);
+        }
         return updated;
       });
     }, 20000);
+
     return () => clearInterval(interval);
   }, [token]);
 
-  // ─── Dialogue Engine ───
+  // 3. Dialogue Engine: Updates speech bubbles depending on pet status
   useEffect(() => {
     if (kancilStatus.isSleeping === 1) {
       setBubbleMessage('Zzz... Aku sedang bermimpi makan wortel raksasa... 💤');
       return;
     }
-    if (['eat', 'dance', 'cry', 'jump', 'wave'].includes(animState)) return;
-    if (kancilStatus.health < 30) setBubbleMessage('Aduh... badanku lemas sekali. Aku butuh plester obat! 🩹');
-    else if (kancilStatus.hunger > 70) setBubbleMessage('Perutku keroncongan... Nyam nyam, bolehkah aku makan pisang? 🍌');
-    else if (kancilStatus.energy < 25) setBubbleMessage('Hoammm... Aku sangat capek. Bolehkah aku tidur sebentar? 💤');
-    else if (kancilStatus.happiness < 40) setBubbleMessage('Aku bosan sekali... Ayo main layang-layang di luar! 🪁');
-    else {
+
+    // Don't override interactive actions like eating/dancing instantly
+    if (['eat', 'dance', 'cry', 'jump', 'wave'].includes(animState)) {
+      return;
+    }
+
+    if (kancilStatus.health < 30) {
+      setBubbleMessage('Aduh... badanku lemas sekali. Aku butuh plester obat! 🩹');
+    } else if (kancilStatus.hunger > 70) {
+      setBubbleMessage('Perutku keroncongan... Nyam nyam, bolehkah aku makan pisang? 🍌');
+    } else if (kancilStatus.energy < 25) {
+      setBubbleMessage('Hoammm... Aku sangat capek. Bolehkah aku tidur sebentar? 💤');
+    } else if (kancilStatus.happiness < 40) {
+      setBubbleMessage('Aku bosan sekali... Ayo main layang-layang di luar! 🪁');
+    } else {
       const messages = [
-        'Ayo belajar matematika seru bareng Numi! ❤️',
+        'Halo teman! Hari ini kita belajar apa? Aku sudah siap! 📚',
         'Wah, cuaca hari ini cerah sekali! Numi senang dirawat olehmu. ☀️',
         'Ingat ya teman, belajar setiap hari membuat otak kita pintar! 🧠',
         'Numi suka sekali melompat di rumput hijau! 🐹',
         'Kamu anak hebat! Teruslah rajin menjawab kuis, ya! ⭐'
       ];
-      setBubbleMessage(messages[Math.floor(Math.random() * messages.length)]);
+      // Periodically cycle normal messages
+      const randomIdx = Math.floor(Math.random() * messages.length);
+      setBubbleMessage(messages[randomIdx]);
     }
   }, [kancilStatus.hunger, kancilStatus.happiness, kancilStatus.energy, kancilStatus.health, kancilStatus.isSleeping, animState]);
 
-  // ─── Quiz Events ───
+  // 4. Listen to Svelte Quiz Events via DOM CustomEvents Bridge
   useEffect(() => {
     const handleQuizSuccess = (e: Event) => {
-      const data = (e as CustomEvent).detail;
+      const customEvent = e as CustomEvent;
+      const data = customEvent.detail;
+      
+      // Update data
       setKancilStatus(data.kancil);
       if (data.progress) setProgress(data.progress);
+      
+      // Animate Kancil
       if (data.levelUp) {
         setAnimState('jump');
-        setBubbleMessage(`HEBAT! Kamu berhasil dan naik ke Level ${data.levelUp.newLevel}! 🎉`);
+        setBubbleMessage(`HEBAT! Kamu berhasil menjawab dan aku naik level ke Level ${data.levelUp.newLevel}! 🎉`);
         playSynthSound('levelUp');
       } else {
         setAnimState('happy');
-        setBubbleMessage('Hore! Jawabanmu benar! Aku mendapat koin dan XP! 🪙');
+        setBubbleMessage('Hore! Jawabanmu benar! Aku mendapat koin emas dan XP! 🪙');
       }
     };
+
     const handleQuizFailure = () => {
       setAnimState('cry');
-      setBubbleMessage('Oh tidak... jawabannya belum tepat. Ayo belajar lagi! 💪');
+      setBubbleMessage('Oh tidak... jawabannya belum tepat. Tidak apa-apa, ayo belajar lagi! 💪');
     };
+
     window.addEventListener('quiz-success', handleQuizSuccess);
     window.addEventListener('quiz-failure', handleQuizFailure);
+
     return () => {
       window.removeEventListener('quiz-success', handleQuizSuccess);
       window.removeEventListener('quiz-failure', handleQuizFailure);
@@ -298,67 +411,110 @@ export const PlayroomDashboard: React.FC = () => {
     setKancilStatus(updatedKancil);
     setInventory(updatedInv);
     setBubbleMessage(msg);
-    if (action === 'feed') setAnimState('eat');
-    else if (action === 'play') setAnimState('dance');
-    else if (action === 'heal') setAnimState('happy');
+
+    // Play corresponding animation
+    if (action === 'feed') {
+      setAnimState('eat');
+    } else if (action === 'play') {
+      setAnimState('dance');
+    } else if (action === 'heal') {
+      setAnimState('happy');
+    }
+
+    // Revert back to idle after animation duration
     setTimeout(() => {
       setAnimState(updatedKancil.isSleeping === 1 ? 'sleep' : 'idle');
     }, 4000);
   };
 
-  // ─── Action Handlers ───
   const handleToggleSleep = async () => {
     if (!token) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'sleep' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
       setAnimState(data.kancil.isSleeping === 1 ? 'sleep' : 'idle');
-    } catch (err: any) { console.error(err); }
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const handleDrink = async () => {
-    if (kancilStatus.isSleeping === 1 || activeAnimation) return;
+    if (kancilStatus.isSleeping === 1) {
+      alert('Ssst, Numi sedang tidur! Bangunkan Numi dulu.');
+      return;
+    }
+    if (activeAnimation) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'drink' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
+      
       setActiveAnimation('drink');
       setAnimState('eat');
       playSynthSound('click');
-      setTimeout(() => { setActiveAnimation(null); setAnimState('happy'); }, 1500);
-    } catch (err: any) { console.error(err); }
+      
+      setTimeout(() => {
+        setActiveAnimation(null);
+        setAnimState('happy');
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const handleBath = async () => {
-    if (kancilStatus.isSleeping === 1 || activeAnimation) return;
+    if (kancilStatus.isSleeping === 1) {
+      alert('Ssst, Numi sedang tidur! Bangunkan Numi dulu.');
+      return;
+    }
+    if (activeAnimation) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'bath' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
+      
       setActiveAnimation('bath');
       setAnimState('happy');
       playSynthSound('success');
-      setTimeout(() => { setActiveAnimation(null); setAnimState('idle'); }, 2000);
-    } catch (err: any) { console.error(err); }
+      
+      setTimeout(() => {
+        setActiveAnimation(null);
+        setAnimState('idle');
+      }, 2000);
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const handleClean = async () => {
@@ -366,77 +522,142 @@ export const PlayroomDashboard: React.FC = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'clean' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
+      
       setActiveAnimation('clean');
       setAnimState('dance');
       playSynthSound('success');
-      setTimeout(() => { setActiveAnimation(null); setAnimState('happy'); }, 2200);
-    } catch (err: any) { console.error(err); }
+      
+      setTimeout(() => {
+        setActiveAnimation(null);
+        setAnimState('happy');
+      }, 2200);
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const handlePlay = async () => {
-    if (kancilStatus.isSleeping === 1 || activeAnimation) return;
+    if (kancilStatus.isSleeping === 1) {
+      alert('Ssst, Numi sedang tidur! Bangunkan Numi dulu.');
+      return;
+    }
+    if (activeAnimation) return;
+
+    // Check if user has toy_ball or toy_kite in inventory
     const hasBall = inventory.some((i: any) => i.itemId === 'toy_ball' && i.quantity > 0);
     const hasKite = inventory.some((i: any) => i.itemId === 'toy_kite' && i.quantity > 0);
     const toyId = hasBall ? 'toy_ball' : hasKite ? 'toy_kite' : null;
+
     if (!toyId) {
-      setBubbleMessage('Yuk kumpulkan koin dengan belajar kuis, lalu beli mainan di Toko!');
+      setBubbleMessage('Yuk kumpulkan koin dengan belajar kuis, lalu beli mainan bola atau layangan di Toko!');
       setAnimState('wave');
       playSynthSound('hover');
-      setTimeout(() => setActiveTab('toko'), 1500);
+      setTimeout(() => {
+        openQuizModal();
+      }, 1500);
       return;
     }
+
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'play', itemId: toyId })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
+      
       setActiveAnimation('play');
       setAnimState('jump');
       playSynthSound('success');
-      setTimeout(() => { setActiveAnimation(null); setAnimState('happy'); }, 1800);
-    } catch (err: any) { console.error(err); }
+      
+      setTimeout(() => {
+        setActiveAnimation(null);
+        setAnimState('happy');
+      }, 1800);
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const handleClaimGift = async () => {
     const lastClaimed = localStorage.getItem('last_claimed_gift');
     const today = new Date().toDateString();
+    
     if (lastClaimed === today) {
       setBubbleMessage('Kamu sudah mengambil hadiah hari ini! Kembali lagi besok ya!');
       setAnimState('wave');
       playSynthSound('hover');
       return;
     }
+
     try {
       const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/action`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ action: 'gift' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setKancilStatus(data.kancil);
       setBubbleMessage(data.message);
+      
       localStorage.setItem('last_claimed_gift', today);
       setAnimState('dance');
       playSynthSound('levelUp');
-    } catch (err: any) { console.error(err); }
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   const openQuizModal = () => {
-    if (kancilStatus.isSleeping === 1) { alert('Ssst, Numi sedang tidur!'); return; }
+    if (kancilStatus.isSleeping === 1) {
+      alert('Ssst, Numi sedang tidur! Bangunkan Numi dulu jika ingin belajar.');
+      return;
+    }
+    // Dispatch custom event to tell Svelte Portal to open
     window.dispatchEvent(new CustomEvent('open-quiz', { detail: { token } }));
+  };
+
+  const openShop = () => {
+    setShopOpen(true);
+  };
+
+  const openInventory = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_PUBLIC_API_URL}/api/kancil/inventory`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.inventory) {
+        setInventory(data.inventory);
+      }
+      setInventoryOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleLogout = () => {
@@ -448,76 +669,183 @@ export const PlayroomDashboard: React.FC = () => {
     window.location.href = '/';
   };
 
-  // ─── Top Stats Bar (matches mockup: Koin | Level | Streak | Notif) ───
-  const renderTopBar = () => (
-    <div className="absolute top-0 left-0 right-0 pt-[calc(env(safe-area-inset-top,0px)+8px)] px-3 pb-2 z-30">
-      {/* Row 1: 4 stat pills */}
-      <div className="flex items-center gap-2 mb-2 select-none">
-        {/* Koin */}
-        <div className="pill-kawaii flex-1 justify-center">
-          <div className="w-6 h-6 bg-[#FFF3D6] rounded-full flex items-center justify-center border border-[#FFD54F]">
-            <Coins className="w-3.5 h-3.5 text-amber-500" />
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-xs font-bold">{kancilStatus.coins}</span>
-            <span className="text-[8px] text-[#6B5B4E]/50">Koin</span>
-          </div>
-        </div>
-        
-        {/* Level */}
-        <div className="pill-kawaii flex-1 justify-center">
-          <div className="w-6 h-6 bg-[#EDE7F6] rounded-full flex items-center justify-center border border-[#B39DDB]">
-            <Star className="w-3.5 h-3.5 text-purple-500" />
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-xs font-bold">Lv. {kancilStatus.level}</span>
-            <span className="text-[8px] text-[#6B5B4E]/50">Level</span>
-          </div>
-        </div>
-        
-        {/* Streak */}
-        <div className="pill-kawaii flex-1 justify-center">
-          <div className="w-6 h-6 bg-[#FFF3E0] rounded-full flex items-center justify-center border border-[#FFCC80]">
-            <Flame className="w-3.5 h-3.5 text-orange-500" />
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-xs font-bold">{kancilStatus.level}</span>
-            <span className="text-[8px] text-[#6B5B4E]/50">Streak</span>
-          </div>
-        </div>
-        
-        {/* Notification Bell */}
-        <button className="pill-kawaii px-2 relative cursor-pointer active:scale-90 transition-transform">
-          <Bell className="w-4.5 h-4.5 text-[#6B5B4E]" />
-          <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#EF5350] text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-white">2</div>
-        </button>
+  // 5. World UI Themes mapping
+  const getWorldBackground = () => {
+    switch (progress.currentWorldId) {
+      case 2: // Kebun
+        return 'from-amber-100 to-amber-200 border-amber-400';
+      case 3: // Hutan
+        return 'from-emerald-800 to-emerald-950 border-emerald-900 text-white';
+      case 4: // Desa
+        return 'from-rose-100 to-rose-200 border-rose-400';
+      case 5: // Istana
+        return 'from-yellow-200 to-amber-300 border-yellow-500';
+      case 1: // Rumput
+      default:
+        return 'from-emerald-100 to-emerald-200 border-emerald-400';
+    }
+  };
+
+  const getWorldDecor = () => {
+    switch (progress.currentWorldId) {
+      case 2:
+        return '🥕 Kebun Wortel & Pisang';
+      case 3:
+        return '🌳 Hutan Belantara';
+      case 4:
+        return '🏡 Desa Numi';
+      case 5:
+        return '👑 Istana Agung Numi';
+      case 1:
+      default:
+        return '🌿 Padang Rumput Hijau';
+    }
+  };
+
+  const getRoomOffset = (idx: number) => {
+    let diff = idx - activeRoomIndex;
+    if (diff > 2) diff -= 5;
+    if (diff < -2) diff += 5;
+    return diff * 100;
+  };
+
+  return (
+    <div 
+      ref={roomRef}
+      onTouchStart={handleTouchStartGesture}
+      onTouchEnd={handleTouchEndGesture}
+      className="w-full h-[100dvh] relative select-none animate-fade-in bg-brand-cream overflow-hidden max-h-screen"
+    >
+      
+      {/* 1. KAWAII SVG ROOM BACKGROUNDS (Full screen sliding container) */}
+      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+        {[0, 1, 2, 3, 4].map((idx) => {
+          const offset = getRoomOffset(idx);
+          const isVisible = Math.abs(offset) <= 100;
+          return (
+            <div 
+              key={idx} 
+              className="absolute inset-0 w-full h-full"
+              style={{
+                transform: `translateX(${offset}%)`,
+                transition: 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s',
+                opacity: isVisible ? 1 : 0,
+                pointerEvents: idx === activeRoomIndex ? 'auto' : 'none'
+              }}
+            >
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                {idx === 0 && <RoomMakan />}
+                {idx === 1 && <RoomMandi />}
+                {idx === 2 && <RoomBermain />}
+                {idx === 3 && <RoomTidur />}
+                {idx === 4 && <RoomBelajar worldDecor={getWorldDecor()} />}
+              </svg>
+
+              {/* SLIDING BOTTOM ACTIONS PANEL FOR EACH ROOM */}
+              <div className="absolute bottom-[4%] left-1/2 transform -translate-x-1/2 w-full max-w-sm px-5 z-20 flex justify-center select-none">
+                {idx === 0 && (
+                  <div className="flex gap-3 w-full justify-center">
+                    <button 
+                      onClick={openInventory}
+                      className="flex-1 max-w-[170px] flex items-center justify-center gap-2 bg-[#FFE8D6] hover:bg-[#FFDDC1] border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)]"
+                    >
+                      <Apple className="w-5 h-5 text-rose-500 fill-rose-100 shrink-0" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">MAKAN (TAS)</span>
+                    </button>
+                    <button 
+                      onClick={handleDrink}
+                      className="flex-1 max-w-[170px] flex items-center justify-center gap-2 bg-[#D4F1F9] hover:bg-[#B8E6F3] border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)]"
+                    >
+                      <Milk className="w-5 h-5 text-sky-400 fill-sky-50 shrink-0" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">MINUM</span>
+                    </button>
+                  </div>
+                )}
+
+                {idx === 1 && (
+                  <div className="flex gap-3 w-full justify-center">
+                    <button 
+                      onClick={handleBath}
+                      className="flex-1 max-w-[170px] flex items-center justify-center gap-2 bg-[#D4F1F9] hover:bg-[#B8E6F3] border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)]"
+                    >
+                      <Bath className="w-5 h-5 text-sky-500 shrink-0" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">MANDI</span>
+                    </button>
+                    <button 
+                      onClick={handleClean}
+                      className="flex-1 max-w-[170px] flex items-center justify-center gap-2 bg-[#E8F5D4] hover:bg-[#D4EDB5] border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)]"
+                    >
+                      <Brush className="w-5 h-5 text-amber-700 shrink-0" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">BERSIHKAN</span>
+                    </button>
+                  </div>
+                )}
+
+                {idx === 2 && (
+                  <div className="flex gap-2.5 w-full justify-center">
+                    <button 
+                      onClick={handlePlay}
+                      className="flex-1 max-w-[110px] flex flex-col items-center justify-center bg-[#E8F5D4] hover:bg-[#D4EDB5] border-2.5 border-[#6B5B4E] py-2 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)] h-14"
+                    >
+                      <Gamepad2 className="w-4.5 h-4.5 text-indigo-500" />
+                      <span className="text-[9px] font-black text-[#6B5B4E] tracking-wider mt-1">MAIN</span>
+                    </button>
+                    <button 
+                      onClick={openShop}
+                      className="flex-1 max-w-[110px] flex flex-col items-center justify-center bg-[#FFF9C4] hover:bg-[#FFF59D] border-2.5 border-[#6B5B4E] py-2 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)] h-14"
+                    >
+                      <ShoppingBag className="w-4.5 h-4.5 text-amber-500" />
+                      <span className="text-[9px] font-black text-[#6B5B4E] tracking-wider mt-1">TOKO</span>
+                    </button>
+                    <button 
+                      onClick={handleClaimGift}
+                      className="flex-1 max-w-[110px] flex flex-col items-center justify-center bg-[#F8BBD0] hover:bg-[#F48FB1] border-2.5 border-[#6B5B4E] py-2 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)] h-14 relative"
+                    >
+                      <div className="absolute top-1 right-1 bg-[#FF8A80] border border-[#6B5B4E] rounded-full w-2.5 h-2.5 animate-pulse z-10" />
+                      <Gift className="w-4.5 h-4.5 text-pink-500" />
+                      <span className="text-[9px] font-black text-[#6B5B4E] tracking-wider mt-1">HADIAH</span>
+                    </button>
+                  </div>
+                )}
+
+                {idx === 3 && (
+                  <div className="w-full max-w-xs flex justify-center">
+                    <button 
+                      onClick={handleToggleSleep}
+                      className={`w-full flex items-center justify-center gap-2 border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)] ${
+                        kancilStatus.isSleeping === 1 
+                          ? 'bg-[#FFF9C4] hover:bg-[#FFF59D]' 
+                          : 'bg-[#D8C9F0] hover:bg-[#C5B3E8]'
+                      }`}
+                    >
+                      <Moon className="w-5 h-5 text-indigo-500 fill-indigo-100 shrink-0" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">
+                        {kancilStatus.isSleeping === 1 ? 'BANGUNKAN NUMI' : 'TIDURKAN NUMI'}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {idx === 4 && (
+                  <div className="w-full max-w-xs flex justify-center">
+                    <button 
+                      onClick={openQuizModal}
+                      className="w-full flex items-center justify-center gap-2 bg-[#FFF9C4] hover:bg-[#FFF59D] border-2.5 border-[#6B5B4E] py-3 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] cursor-pointer transition-all active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(107,91,78,0.25)] relative"
+                    >
+                      <div className="absolute top-1.5 right-4 bg-[#FF8A80] border border-[#6B5B4E] rounded-full w-3 h-3 animate-pulse z-10" />
+                      <BookOpen className="w-5 h-5 text-[#6B5B4E] fill-amber-100 shrink-0 animate-bounce" />
+                      <span className="text-[10px] font-black text-[#6B5B4E] tracking-wider">MULAI MISI BELAJAR</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Hadiah button (only on beranda) */}
-      {activeTab === 'beranda' && (
-        <button 
-          onClick={handleClaimGift}
-          className="pill-kawaii bg-white cursor-pointer active:scale-95 transition-transform relative"
-        >
-          <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#EF5350] rounded-full animate-pulse border border-white" />
-          <Gift className="w-5 h-5 text-amber-500" />
-          <span className="text-[10px] font-bold text-[#6B5B4E]">Hadiah</span>
-        </button>
-      )}
-    </div>
-  );
-
-  // ─── Home Tab (Beranda) — Pet Room ───
-  const renderBerandaTab = () => (
-    <div ref={roomRef} className="absolute inset-0 w-full h-full">
-      {/* Room Background Image */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${roomBg})` }}
-      />
-
-      {/* Kancil Pet */}
-      <div className="absolute left-1/2 bottom-[16%] transform -translate-x-1/2 z-10 w-[55%] h-[38%] flex items-center justify-center select-none">
+      {/* 2. Kancil Pet Center Placement */}
+      <div className="absolute left-1/2 bottom-[14%] transform -translate-x-1/2 z-10 w-[55%] h-[38%] flex items-center justify-center select-none">
         <KancilPet 
           state={animState} 
           level={kancilStatus.level} 
@@ -529,41 +857,150 @@ export const PlayroomDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Speech Bubble */}
-      <div className="absolute left-1/2 bottom-[50%] transform -translate-x-1/2 z-20 max-w-[200px]">
-        <div className="relative">
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#6B5B4E] bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFD54F] whitespace-nowrap z-10">Kata Numi</span>
-          <div className="bg-white/95 text-[#6B5B4E] border-2 border-[#6B5B4E]/15 rounded-2xl px-3.5 py-2.5 pt-3 font-bold text-[10px] text-center shadow-sm relative">
-            {bubbleMessage}
-            <div className="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white/95 border-r-2 border-b-2 border-[#6B5B4E]/15 rotate-45 z-0" />
-          </div>
+      {/* Speech Bubble — kawaii style */}
+      <div className="absolute left-1/2 bottom-[46%] transform -translate-x-1/2 z-20 max-w-[200px]">
+        <div className="bg-white/95 text-[#6B5B4E] border-2 border-[#6B5B4E] rounded-2xl px-3 py-1.5 font-bold text-[10px] text-center shadow-[2px_2px_0px_0px_rgba(107,91,78,0.3)] relative select-none">
+          {bubbleMessage}
+          <div className="absolute bottom-[-7px] left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white/95 border-r-2 border-b-2 border-[#6B5B4E] rotate-45 z-0" />
         </div>
       </div>
 
-      {/* Event Card at bottom */}
-      <div className="absolute bottom-[1%] left-3 right-3 z-20">
-        <div className="card-kawaii p-3 flex items-center gap-3">
-          <span className="text-2xl">🧹</span>
-          <div className="flex-1">
-            <h4 className="text-xs font-bold text-[#6B5B4E]">Kamar berdebu!</h4>
-            <p className="text-[9px] text-[#6B5B4E]/60 font-medium">
-              Numi rindu kamar yang bersih. Yuk, bersihkan dengan menjawab 3 soal matematika!
-            </p>
+
+
+      {/* 3. INTERACTIVE FLOATING UI OVERLAYS */}
+      
+      {/* Top Floating Panel (Header & Stats wrapper) */}
+      <div className="absolute top-0 left-0 right-0 pt-[calc(env(safe-area-inset-top,0px)+12px)] px-3 pb-3 z-30 flex flex-col gap-2">
+        {/* Top Header */}
+        <div className="flex justify-between items-center gap-2 select-none">
+          {/* Welcome Profile */}
+          <div className="flex-1 flex items-center gap-2 bg-white/90 border-2 border-[#6B5B4E] px-3 py-1.5 rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.2)] overflow-hidden">
+            <Smile className="w-5 h-5 text-[#6B5B4E] fill-[#FFF59D] shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-xs font-black text-brand-dark leading-tight">{user?.username}</span>
+              <span className="text-[8px] font-bold text-slate-500 leading-none">
+                {user?.role === 'admin' ? 'Guru / Admin' : 'Siswa'}
+              </span>
+            </div>
           </div>
-          <button 
-            onClick={openQuizModal}
-            className="bg-[#66BB6A] hover:bg-[#4CAF50] text-white text-[9px] font-bold px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer shrink-0"
-          >
-            <span>Bersihkan</span>
-            <span>Kamar</span>
-            <span className="bg-white/30 px-1.5 py-0.5 rounded text-[8px]">3 Soal</span>
-          </button>
+
+          {/* Quick Header Action Icons — kawaii */}
+          <div className="flex items-center gap-1.5">
+            {user?.role === 'admin' && (
+              <Link to="/admin">
+                <button className="bg-[#FFF9C4]/90 hover:bg-[#FFF59D] border-2 border-[#6B5B4E] p-2 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] flex items-center justify-center transition-transform active:scale-90 cursor-pointer">
+                  <Crown className="w-4 h-4 text-amber-600 fill-amber-100" />
+                </button>
+              </Link>
+            )}
+            <Link to="/map">
+              <button className="bg-white/90 hover:bg-white border-2 border-[#6B5B4E] p-2 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] flex items-center justify-center transition-transform active:scale-90 cursor-pointer">
+                <Map className="w-4 h-4 text-emerald-600 fill-emerald-100" />
+              </button>
+            </Link>
+            <button 
+              onClick={() => {
+                setBubbleMessage('Cekrek! Foto Numi berhasil disimpan di memorimu!');
+                setAnimState('wave');
+                playSynthSound('success');
+              }}
+              className="bg-white/90 hover:bg-white border-2 border-[#6B5B4E] p-2 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+            >
+              <Camera className="w-4 h-4 text-indigo-600 fill-indigo-100" />
+            </button>
+            <button 
+              onClick={() => {
+                setBubbleMessage('Pengaturan: NUMI siap mendidik anak-anak Indonesia!');
+                setAnimState('happy');
+                playSynthSound('click');
+              }}
+              className="bg-white/90 hover:bg-white border-2 border-[#6B5B4E] p-2 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+            >
+              <Settings className="w-4 h-4 text-slate-600 fill-slate-100" />
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="bg-[#FFB4C2]/80 hover:bg-[#FFB4C2] border-2 border-[#6B5B4E] p-2 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] flex items-center justify-center transition-transform active:scale-90 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 text-rose-600" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Row — kawaii */}
+        <div className="flex justify-between items-center gap-2 select-none">
+          {/* Coins Counter */}
+          <div className="flex items-center gap-1.5 bg-white/90 border-2 border-[#6B5B4E] px-2.5 py-1 rounded-2xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] font-bold text-[#6B5B4E] text-xs h-9">
+            <Coins className="w-4 h-4 text-[#6B5B4E] fill-amber-100" />
+            <span>{kancilStatus.coins}</span>
+            <button 
+              onClick={openShop} 
+              className="ml-1 w-4.5 h-4.5 bg-[#A5D6A7] hover:bg-[#81C784] border-1.5 border-[#6B5B4E] text-white rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-transform active:scale-90 leading-none"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Level & XP Capsule */}
+          <div className="flex-1 flex items-center gap-1.5 bg-white/90 border-2 border-[#6B5B4E] px-2 py-1 rounded-2xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] h-9">
+            <div className="w-5 h-5 rounded-full bg-[#FFF59D] border-1.5 border-[#6B5B4E] flex items-center justify-center text-[10px] shrink-0">
+              <Star className="w-3 h-3 text-amber-600 fill-amber-300" />
+            </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex justify-between items-center text-[8px] font-bold text-[#6B5B4E] leading-none mb-0.5">
+                <span>LV {kancilStatus.level}</span>
+                <span className="opacity-70">{kancilStatus.xp}/{kancilStatus.level * 100}</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#F5F5F5] border border-[#6B5B4E]/40 rounded-full overflow-hidden relative">
+                <div 
+                  className="h-full bg-[#FFF59D] rounded-full" 
+                  style={{ width: `${(kancilStatus.xp / (kancilStatus.level * 100)) * 100}%` }} 
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Mini Stats */}
+          <div className="grid grid-cols-2 gap-1 text-[8px] font-bold text-[#6B5B4E]">
+            <div className="flex items-center gap-1 bg-white/90 border-1.5 border-[#6B5B4E]/60 px-1.5 py-0.5 rounded-lg shadow-[1px_1px_0px_0px_rgba(107,91,78,0.1)]">
+              <Zap className="w-2.5 h-2.5 text-amber-500 fill-amber-200" />
+              <span>{kancilStatus.energy}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-white/90 border-1.5 border-[#6B5B4E]/60 px-1.5 py-0.5 rounded-lg shadow-[1px_1px_0px_0px_rgba(107,91,78,0.1)]">
+              <Utensils className="w-2.5 h-2.5 text-rose-500" />
+              <span>{Math.max(0, 100 - kancilStatus.hunger)}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-white/90 border-1.5 border-[#6B5B4E]/60 px-1.5 py-0.5 rounded-lg shadow-[1px_1px_0px_0px_rgba(107,91,78,0.1)]">
+              <Heart className="w-2.5 h-2.5 text-pink-500 fill-pink-100" />
+              <span>{kancilStatus.health}</span>
+            </div>
+            <div className="flex items-center gap-1 bg-white/90 border-1.5 border-[#6B5B4E]/60 px-1.5 py-0.5 rounded-lg shadow-[1px_1px_0px_0px_rgba(107,91,78,0.1)]">
+              <Smile className="w-2.5 h-2.5 text-indigo-500 fill-indigo-100" />
+              <span>{kancilStatus.happiness}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Room Title Badge — kawaii */}
+        <div className="text-center font-bold text-[#6B5B4E] text-xs flex items-center justify-center gap-2 select-none bg-white/95 border-2 border-[#6B5B4E] py-1 rounded-xl shadow-[1.5px_1.5px_0px_0px_rgba(107,91,78,0.2)] mx-auto px-4 w-fit">
+          {activeRoomIndex === 0 && <Utensils className="w-3.5 h-3.5 text-[#6B5B4E]" />}
+          {activeRoomIndex === 1 && <Bath className="w-3.5 h-3.5 text-[#6B5B4E]" />}
+          {activeRoomIndex === 2 && <Gamepad2 className="w-3.5 h-3.5 text-[#6B5B4E]" />}
+          {activeRoomIndex === 3 && <Moon className="w-3.5 h-3.5 text-[#6B5B4E]" />}
+          {activeRoomIndex === 4 && <BookOpen className="w-3.5 h-3.5 text-[#6B5B4E]" />}
+          <span className="tracking-wide uppercase">
+            {activeRoomIndex === 0 ? 'Ruang Makan' : activeRoomIndex === 1 ? 'Kamar Mandi' : activeRoomIndex === 2 ? 'Ruang Bermain' : activeRoomIndex === 3 ? 'Kamar Tidur' : 'Ruang Belajar'}
+          </span>
         </div>
       </div>
 
-      {/* Active animation overlay */}
+      {/* Floating Action Animation Emojis */}
       {activeAnimation && (
-        <div ref={animEmojiRef} className="absolute z-40 select-none pointer-events-none" style={{ left: '50%', top: '55%', transform: 'translate(-50%, -50%)' }}>
+        <div 
+          ref={animEmojiRef} 
+          className="absolute z-40 select-none pointer-events-none"
+          style={{ left: '50%', top: '55%', transform: 'translate(-50%, -50%)' }}
+        >
           {activeAnimation === 'drink' && <Milk className="w-12 h-12 text-sky-400 animate-bounce" />}
           {activeAnimation === 'bath' && <Bath className="w-12 h-12 text-sky-500 animate-bounce" />}
           {activeAnimation === 'play' && <Gamepad2 className="w-12 h-12 text-indigo-500 animate-bounce" />}
@@ -571,16 +1008,20 @@ export const PlayroomDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Draggable food */}
+      {/* Floating Draggable Food Item — kawaii */}
       {activeDraggableFood && (
         <div
           className="draggable-food-item absolute z-30 select-none cursor-grab active:cursor-grabbing flex flex-col items-center touch-none"
-          style={{ left: foodPos.x, top: foodPos.y, transform: 'translate(-50%, -50%)' }}
+          style={{
+            left: foodPos.x,
+            top: foodPos.y,
+            transform: 'translate(-50%, -50%)',
+          }}
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
         >
           <div className="absolute inset-0 bg-[#FFF9C4]/40 rounded-full scale-125 blur-md animate-pulse"></div>
-          <div className="w-14 h-14 bg-white border-2 border-[#6B5B4E]/20 rounded-2xl shadow-sm flex items-center justify-center z-10 relative">
+          <div className="w-14 h-14 bg-white border-2 border-[#6B5B4E] rounded-2xl shadow-[2px_2px_0px_0px_rgba(107,91,78,0.25)] flex items-center justify-center z-10 relative">
             {renderFoodIcon(activeDraggableFood.id)}
           </div>
           <div className="bg-[#6B5B4E] text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full mt-1.5 shadow-sm z-10 relative select-none">
@@ -588,162 +1029,12 @@ export const PlayroomDashboard: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  );
 
-  // ─── Numi Tab — Pet Care Actions ───
-  const renderNumiTab = () => (
-    <div className="absolute inset-0 w-full h-full">
-      {/* Room Background */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${roomBg})` }}
-      />
-      
-      {/* Kancil Pet */}
-      <div className="absolute left-1/2 bottom-[28%] transform -translate-x-1/2 z-10 w-[55%] h-[38%] flex items-center justify-center select-none">
-        <KancilPet 
-          state={animState} 
-          level={kancilStatus.level} 
-          skinColor={skinColor}
-          activeClothing={activeClothing}
-          onAnimationEnd={() => setAnimState(kancilStatus.isSleeping === 1 ? 'sleep' : 'idle')} 
-        />
-      </div>
 
-      {/* Speech Bubble */}
-      <div className="absolute left-1/2 bottom-[62%] transform -translate-x-1/2 z-20 max-w-[200px]">
-        <div className="relative">
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#6B5B4E] bg-[#FFF3D6] px-2 py-0.5 rounded-full border border-[#FFD54F] whitespace-nowrap z-10">Kata Numi</span>
-          <div className="bg-white/95 text-[#6B5B4E] border-2 border-[#6B5B4E]/15 rounded-2xl px-3.5 py-2.5 pt-3 font-bold text-[10px] text-center shadow-sm relative">
-            {bubbleMessage}
-            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white/95 border-r-2 border-b-2 border-[#6B5B4E]/15 rotate-45" />
-          </div>
-        </div>
-      </div>
 
-      {/* Sleep info (if sleeping) */}
-      {kancilStatus.isSleeping === 1 && (
-        <div className="absolute bottom-[20%] left-4 right-4 z-20">
-          <div className="card-kawaii p-3 flex items-center gap-2 text-center justify-center">
-            <Moon className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-bold text-[#6B5B4E]">Jam tidur: 21.00 - 06.00</span>
-          </div>
-        </div>
-      )}
 
-      {/* 4 Action Buttons */}
-      <div className="absolute bottom-[2%] left-3 right-3 z-20">
-        <div className="flex gap-2 justify-center">
-          {[
-            { label: 'Beri Makan', icon: <Utensils className="w-5 h-5 text-rose-400" />, onClick: () => { setInventoryOpen(true); } },
-            { label: 'Bermain', icon: <Gamepad2 className="w-5 h-5 text-indigo-400" />, onClick: handlePlay },
-            { label: 'Mandi', icon: <Bath className="w-5 h-5 text-sky-400" />, onClick: handleBath, highlight: true },
-            { label: 'Bersihkan', icon: <Brush className="w-5 h-5 text-amber-600" />, onClick: handleClean },
-          ].map((action, i) => (
-            <button
-              key={i}
-              onClick={action.onClick}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-2xl cursor-pointer active:scale-95 transition-transform select-none ${
-                action.highlight
-                  ? 'bg-[#FFF3D6] border-2 border-[#FFD54F]'
-                  : 'card-kawaii'
-              }`}
-            >
-              {action.icon}
-              <span className="text-[9px] font-bold text-[#6B5B4E]">{action.label}</span>
-            </button>
-          ))}
-        </div>
 
-        {/* Sleep toggle */}
-        <button
-          onClick={handleToggleSleep}
-          className={`w-full mt-2 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer active:scale-[0.97] transition-transform ${
-            kancilStatus.isSleeping === 1 
-              ? 'bg-[#FFF3D6] border-2 border-[#FFD54F] text-[#E67E22]' 
-              : 'bg-[#EDE7F6] border-2 border-[#B39DDB] text-[#7E57C2]'
-          }`}
-        >
-          <Moon className="w-4 h-4" />
-          {kancilStatus.isSleeping === 1 ? 'Bangunkan Numi' : 'Tidurkan Numi'}
-        </button>
-      </div>
-
-      {/* Active animation overlay */}
-      {activeAnimation && (
-        <div className="absolute z-40 select-none pointer-events-none" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-          {activeAnimation === 'drink' && <Milk className="w-12 h-12 text-sky-400 animate-bounce" />}
-          {activeAnimation === 'bath' && <Bath className="w-12 h-12 text-sky-500 animate-bounce" />}
-          {activeAnimation === 'play' && <Gamepad2 className="w-12 h-12 text-indigo-500 animate-bounce" />}
-          {activeAnimation === 'clean' && <Brush className="w-12 h-12 text-amber-700 animate-bounce" />}
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="w-full h-[100dvh] relative select-none bg-brand-cream overflow-hidden max-h-screen">
-      
-      {/* ─── Tab Content ─── */}
-      <div className="absolute inset-0 pb-16">
-        {/* Beranda (Home) */}
-        {activeTab === 'beranda' && renderBerandaTab()}
-
-        {/* Belajar (Learn) */}
-        {activeTab === 'belajar' && (
-          <div className="w-full h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top,0px)+80px)]">
-            <BelajarTab 
-              level={kancilStatus.level}
-              xp={kancilStatus.xp}
-              onStartQuiz={() => openQuizModal()}
-            />
-          </div>
-        )}
-
-        {/* Numi (Pet Care) */}
-        {activeTab === 'numi' && renderNumiTab()}
-
-        {/* Toko (Shop) */}
-        {activeTab === 'toko' && token && (
-          <div className="w-full h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top,0px)+80px)]">
-            <TokoTab 
-              token={token}
-              coins={kancilStatus.coins}
-              onPurchaseSuccess={(k, i) => {
-                setKancilStatus(k);
-                setInventory(i);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Teman (Friends) */}
-        {activeTab === 'teman' && (
-          <div className="w-full h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top,0px)+80px)]">
-            <TemanTab username={user?.username || ''} />
-          </div>
-        )}
-
-        {/* Profil */}
-        {activeTab === 'profil' && (
-          <div className="w-full h-full overflow-hidden flex flex-col pt-[calc(env(safe-area-inset-top,0px)+80px)]">
-            <ProfilTab 
-              user={user}
-              kancilStatus={kancilStatus}
-              onLogout={handleLogout}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* ─── Top Stats Bar (always visible) ─── */}
-      {renderTopBar()}
-
-      {/* ─── Bottom Navigation Bar ─── */}
-      <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* ─── Modals ─── */}
+      {/* 4. MODALS COMPONENTS */}
       {token && (
         <>
           <ShopModal
@@ -756,6 +1047,7 @@ export const PlayroomDashboard: React.FC = () => {
               setInventory(i);
             }}
           />
+
           <InventoryModal
             isOpen={inventoryOpen}
             onClose={() => setInventoryOpen(false)}
@@ -765,12 +1057,15 @@ export const PlayroomDashboard: React.FC = () => {
             onOpenShop={() => setShopOpen(true)}
             onStartFeedDrag={(itemId, name) => {
               setInventoryOpen(false);
-              setActiveTab('beranda');
               setActiveDraggableFood({ id: itemId, name });
               setBubbleMessage('Nyam! Tarik makanannya tepat ke mulut Numi! 🍎');
+              
               if (roomRef.current) {
                 const roomRect = roomRef.current.getBoundingClientRect();
-                setFoodPos({ x: roomRect.width - 80, y: roomRect.height - 100 });
+                setFoodPos({
+                  x: roomRect.width - 80,
+                  y: roomRect.height - 100
+                });
               } else {
                 setFoodPos({ x: 380, y: 280 });
               }
@@ -778,8 +1073,8 @@ export const PlayroomDashboard: React.FC = () => {
           />
         </>
       )}
+
     </div>
   );
 };
-
 export default PlayroomDashboard;
