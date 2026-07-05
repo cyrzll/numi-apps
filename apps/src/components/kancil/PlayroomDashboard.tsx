@@ -733,13 +733,30 @@ export const PlayroomDashboard: React.FC = () => {
                 pointerEvents: idx === activeRoomIndex ? 'auto' : 'none'
               }}
             >
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-                {idx === 0 && <RoomMakan />}
-                {idx === 1 && <RoomMandi />}
-                {idx === 2 && <RoomBermain />}
-                {idx === 3 && <RoomTidur />}
-                {idx === 4 && <RoomBelajar worldDecor={getWorldDecor()} />}
-              </svg>
+              {idx === 0 && (
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/rooms/room_makan.png')` }}
+                />
+              )}
+              {idx === 2 && (
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/rooms/room_main.png')` }}
+                />
+              )}
+              {idx === 3 && (
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/rooms/room_night.png')` }}
+                />
+              )}
+              {(idx === 1 || idx === 4) && (
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                  {idx === 1 && <RoomMandi />}
+                  {idx === 4 && <RoomBelajar worldDecor={getWorldDecor()} />}
+                </svg>
+              )}
 
               {/* SLIDING BOTTOM ACTIONS PANEL FOR EACH ROOM */}
               <div className="absolute bottom-[4%] left-1/2 transform -translate-x-1/2 w-full max-w-sm px-5 z-20 flex justify-center select-none">
@@ -845,7 +862,7 @@ export const PlayroomDashboard: React.FC = () => {
       </div>
 
       {/* 2. Kancil Pet Center Placement */}
-      <div className="absolute left-1/2 bottom-[14%] transform -translate-x-1/2 z-10 w-[55%] h-[38%] flex items-center justify-center select-none">
+      <div className="absolute left-1/2 bottom-[12%] transform -translate-x-1/2 z-10 w-[68%] h-[46%] flex items-center justify-center select-none">
         <KancilPet 
           state={animState} 
           level={kancilStatus.level} 

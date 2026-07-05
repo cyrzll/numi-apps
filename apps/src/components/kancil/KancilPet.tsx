@@ -20,8 +20,8 @@ export const KancilPet: React.FC<KancilPetProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Growth scale: level 1 = 0.75, level 20 = 1.1
-  const growthScale = 0.75 + (Math.min(level, 20) - 1) * (0.35 / 19);
+  // Growth scale: level 1 = 1.05, level 20 = 1.4
+  const growthScale = 1.05 + (Math.min(level, 20) - 1) * (0.35 / 19);
 
   // Element Refs
   const wholeKancilRef = useRef<SVGGElement>(null);
@@ -168,10 +168,10 @@ export const KancilPet: React.FC<KancilPetProps> = ({
   return (
     <div ref={containerRef} className="w-full flex items-center justify-center p-4">
       <svg
-        width="280"
-        height="280"
+        width="340"
+        height="340"
         viewBox="0 0 300 300"
-        className="w-64 h-64 select-none"
+        className="w-80 h-80 select-none"
         xmlns="http://www.w3.org/2000/svg"
         style={{ filter: 'drop-shadow(0 4px 10px rgba(107, 91, 78, 0.12))' }}
       >
@@ -204,7 +204,7 @@ export const KancilPet: React.FC<KancilPetProps> = ({
               ref={characterImageRef}
               href={state === 'sleep' ? "/rooms/kancil_sleep.png" : "/rooms/kancil_idle.png"}
               x="50" 
-              y="40" 
+              y="52" 
               width="200" 
               height="210"
               style={{ filter: getSkinColorFilter() }}
@@ -212,7 +212,7 @@ export const KancilPet: React.FC<KancilPetProps> = ({
 
             {/* ACTIVE CLOTHING - CROWN (Aligned to head) */}
             {activeClothing === 'clothing_crown' && state !== 'sleep' && (
-              <g transform="translate(132, 38)">
+              <g transform="translate(132, 50)">
                 <polygon points="0,24 0,8 8,16 18,4 28,16 36,8 36,24" fill="#FFE082" stroke={COLORS.outline} strokeWidth="2.5" />
                 <rect x="0" y="21" width="36" height="3.5" fill="#FFD54F" stroke={COLORS.outline} strokeWidth="1.8" />
                 <circle cx="18" cy="4" r="2.5" fill="#EF5350" />
@@ -223,7 +223,7 @@ export const KancilPet: React.FC<KancilPetProps> = ({
 
             {/* ACTIVE CLOTHING - RED BASEBALL CAP (Aligned to head) */}
             {activeClothing === 'clothing_red_cap' && state !== 'sleep' && (
-              <g transform="translate(120, 36)">
+              <g transform="translate(120, 48)">
                 <path d="M 5,24 C 5,4 51,4 51,24 Z" fill="#EF5350" stroke={COLORS.outline} strokeWidth="2.5" />
                 <path d="M 45,22 C 58,22 66,27 54,29 L 38,25" fill="#EF5350" stroke={COLORS.outline} strokeWidth="2.2" strokeLinecap="round" />
                 <circle cx="28" cy="5" r="3.5" fill="#D32F2F" stroke={COLORS.outline} strokeWidth="1.5" />
@@ -232,14 +232,14 @@ export const KancilPet: React.FC<KancilPetProps> = ({
 
             {/* ACTIVE CLOTHING - CUSTOM BOWTIE OVERLAYS (Aligned to neck) */}
             {activeClothing === 'clothing_bowtie_red' && state !== 'sleep' && (
-              <g transform="translate(150, 154)">
+              <g transform="translate(150, 166)">
                 <polygon points="0,0 -12,-10 -12,10" fill="#FF8A80" stroke={COLORS.outline} strokeWidth="2.5" />
                 <polygon points="0,0 12,-10 12,10" fill="#FF8A80" stroke={COLORS.outline} strokeWidth="2.5" />
                 <circle cx="0" cy="0" r="4.5" fill="#FF8A80" stroke={COLORS.outline} strokeWidth="2.5" />
               </g>
             )}
             {activeClothing === 'clothing_bowtie_blue' && state !== 'sleep' && (
-              <g transform="translate(150, 154)">
+              <g transform="translate(150, 166)">
                 <polygon points="0,0 -12,-10 -12,10" fill="#82B1FF" stroke={COLORS.outline} strokeWidth="2.5" />
                 <polygon points="0,0 12,-10 12,10" fill="#82B1FF" stroke={COLORS.outline} strokeWidth="2.5" />
                 <circle cx="0" cy="0" r="4.5" fill="#82B1FF" stroke={COLORS.outline} strokeWidth="2.5" />
@@ -247,8 +247,8 @@ export const KancilPet: React.FC<KancilPetProps> = ({
             )}
 
             {/* Crying Teardrops */}
-            <circle ref={tearLeftRef} cx="128" cy="114" r="4" fill={COLORS.tear} />
-            <circle ref={tearRightRef} cx="172" cy="114" r="4" fill={COLORS.tear} />
+            <circle ref={tearLeftRef} cx="128" cy="126" r="4" fill={COLORS.tear} />
+            <circle ref={tearRightRef} cx="172" cy="126" r="4" fill={COLORS.tear} />
 
             {/* Sleeping Zzzs (always rendering if state is sleep) */}
             <g ref={zzzContainerRef}>
