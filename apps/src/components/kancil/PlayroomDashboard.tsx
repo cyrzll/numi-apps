@@ -868,7 +868,7 @@ export const PlayroomDashboard: React.FC = () => {
       </div>
 
       {/* 2. Kancil Pet Center Placement */}
-      <div className="absolute left-1/2 bottom-[12%] transform -translate-x-1/2 z-10 w-[68%] h-[46%] flex items-center justify-center select-none">
+      <div className="absolute left-1/2 bottom-[3%] transform -translate-x-1/2 z-10 w-[68%] h-[46%] flex items-end justify-center select-none">
         <KancilPet 
           state={animState} 
           level={kancilStatus.level} 

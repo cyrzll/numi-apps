@@ -166,7 +166,7 @@ export const KancilPet: React.FC<KancilPetProps> = ({
   };
 
   return (
-    <div ref={containerRef} className="w-full flex items-center justify-center p-4">
+    <div ref={containerRef} className="w-full flex items-end justify-center p-0">
       <svg
         width="340"
         height="340"
